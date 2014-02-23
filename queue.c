@@ -16,12 +16,12 @@ void enqueue(int data){
 		Node* temp = (Node*)malloc(sizeof(Node));
 		temp->data = data;
 		tail = temp;
-		head = tail;
+		head = temp;
 	}else{
 		Node* temp = (Node*)malloc(sizeof(Node));
 		temp->data = data;
-		temp->next = head;
-		head = temp;	
+		tail->next = temp;
+		tail = temp;	
 	}
 }
 
