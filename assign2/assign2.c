@@ -41,18 +41,17 @@ Node* tail = 0;
 
 void enqueue(operation_t* n){
 	pthread_mutex_lock(&enqlock);
-	if(head==0){
-		tail = (Node*) malloc(sizeof(Node));
-		tail->next = 0;
-		tail->op = n;
-		head = tail;
-	}else{
-		Node* temp = (Node*) malloc(sizeof(Node));
+	if (head==0){
+		Node* temp = (Node*)malloc(sizeof(Node));
 		temp->op = n;
-		temp->next = tail->next;
-		tail->next = temp;
 		tail = temp;
-	}		
+		head = temp;
+	}else{
+		Node* temp = (Node*)malloc(sizeof(Node));
+		temp->op = n;
+		tail->next = temp;
+		tail = temp;	
+	}
 	pthread_mutex_unlock(&enqlock);
 }
 
@@ -61,9 +60,9 @@ operation_t* dequeue(){
 	if(head==0){
 		return 0;
 	}else{
-		operation_t* n = head->op;
+		Node *temp = head;
 		head = head->next;
-		return n;
+		return temp->op;
 	}
 	pthread_mutex_unlock(&deqlock);
 }
