@@ -17,8 +17,8 @@ typedef struct queue_operation {
 } operation_t;
 
 typedef struct node {
-	int value;
-	operation_t* next;
+	operation_t* op;
+	node* next;
 } Node;
 
 typedef struct generator_state { 
@@ -30,12 +30,42 @@ int load_generator(operation_t *op, generator_state_t **s) {
 		*s = (generator_state_t *) malloc(sizeof(generator_state_t)); // initialize state
 	}
 	// set value for op­>operation and op­>value
+	srand(time(0));
+	op->operation = rand() % 2;
+	op->value = rand();
 	return 1; // 1 success ­­ return 0 for failure 
 }
 
-void enqueue(Node* n){
-	pthread_mutex_lock(&enqlock);
+Node* head = 0;
+Node* tail = 0;
 
+void enqueue(operation_t* n){
+	pthread_mutex_lock(&enqlock);
+	if(head==0){
+		tail = (Node*) malloc(sizeof(Node));
+		tail->next = 0;
+		tail->op = n;
+		head = tail;
+	}else{
+		Node* temp = (Node*) malloc(sizeof(Node));
+		temp->op = n;
+		temp->next = tail->next;
+		tail->next = temp;
+		tail = temp;
+	}		
+	pthread_mutex_unlock(&enqlock);
+}
+
+operation_t* dequeue(){
+	pthread_mutex_lock(&deqlock);
+	if(head==0){
+		return 0;
+	}else{
+		operation_t* n = head->op;
+		head = head->next;
+		return n;
+	}
+	pthread_mutex_unlock(&deqlock);
 }
 
 int main(int argc, char** args){
