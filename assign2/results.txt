@@ -1,2 +1,11 @@
-# of threads=2 time (seconds)=30 total number of operations=27933847
+FROM 2009 MACBOOK PRO
 # of threads=2 time (seconds)=30 total number of operations=35192903
+# of threads=5 time (seconds)=30 total number of operations=13955016
+# of threads=10 time (seconds)=30 total number of operations=10143977
+# of threads=15 time (seconds)=30 total number of operations=10572090
+# of threads=20 time (seconds)=30 total number of operations=9781255
+# of threads=2 time (seconds)=60 total number of operations=79777543
+# of threads=5 time (seconds)=60 total number of operations=30396033
+# of threads=10 time (seconds)=60 total number of operations=22052470
+# of threads=15 time (seconds)=60 total number of operations=21096024
+# of threads=20 time (seconds)=60 total number of operations=20129896

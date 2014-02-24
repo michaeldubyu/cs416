@@ -32,7 +32,7 @@ Node* tail = 0;
 
 void enqueue(int n){
 	pthread_mutex_lock(&qlock);
-	if (head==0){
+	if (!head){
 		Node* temp = (Node*)malloc(sizeof(Node));
 		temp->value = n;
 		tail = temp;
@@ -49,15 +49,15 @@ void enqueue(int n){
 int dequeue(){
 	pthread_mutex_lock(&qlock);
 	if(!head){
-	    pthread_mutex_unlock(&qlock);
+	pthread_mutex_unlock(&qlock);
 		return 0;
 	}else{
 		Node* temp = head;
-        int tval = temp->value;
+		int tval = temp->value;
 		head = head->next;
 		temp = 0;
 		free(temp);
-	    pthread_mutex_unlock(&qlock);
+	pthread_mutex_unlock(&qlock);
 		return tval;
 	}
 }
@@ -84,13 +84,15 @@ int main(int argc, char** args){
 	pthread_mutex_init(&qlock,0);
 	pthread_mutex_init(&countlock,0);
 
-	while( NUM_PROCESSES < PROCESSES){	// while we still haven't reached the end of time to run
+	while(NUM_PROCESSES < PROCESSES){	// fire up a bunch of threads
 		pthread_t thread;	
 		pthread_create(&thread, 0, &work, 0);
 		NUM_PROCESSES++;
 	}
+	
 	unsigned int startTime = (unsigned) time(0);
-	while((unsigned) time(0) < startTime + (TTR)){}
+	while((unsigned) time(0) < startTime + (TTR)) {/* spin a whole bunch while waiting for them to run */}
+	
 	FILE *f = fopen("results.txt", "a");
 	fprintf(f, "# of threads=%d time (seconds)=%d total number of operations=%d\n", PROCESSES, TTR, OP_COUNT);
 	return 1;
@@ -120,4 +122,5 @@ void* work(void* p){
 		OP_COUNT++;
 		pthread_mutex_unlock(&countlock);
 	}
+	return (void*)0; // shut up compiler
 }
