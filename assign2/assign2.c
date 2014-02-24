@@ -77,6 +77,7 @@ int main(int argc, char** args){
 		}	
 	}
 
+	srand(time(0));
 	pthread_mutex_init(&qlock,0);
 	pthread_mutex_init(&countlock,0);
 
@@ -97,7 +98,6 @@ int load_generator(operation_t *op, generator_state_t **s) {
 		*s = (generator_state_t *) malloc(sizeof(generator_state_t)); // initialize state
 	}
 	// set value for op­>operation and op­>value
-	srand(time(0));
 	op->operation = rand() % 2;
 	op->value = rand();
 	return 1; // 1 success ­­ return 0 for failure 
