@@ -31,9 +31,7 @@ Node* head = 0;
 Node* tail = 0;
 
 void enqueue(int n){
-    printf("thread before inside q mutex\n");
 	pthread_mutex_lock(&qlock);
-    printf("thread inside q mutex\n");
 	if (head==0){
 		Node* temp = (Node*)malloc(sizeof(Node));
 		temp->value = n;
@@ -46,20 +44,19 @@ void enqueue(int n){
 		tail = temp;	
 	}
 	pthread_mutex_unlock(&qlock);
-    printf("thread outside q mutex\n");
 }
 
 int dequeue(){
-    printf("thread before inside dq mutex\n");
 	pthread_mutex_lock(&qlock);
-    printf("thread inside dq mutex\n");
-	if(head==0){
+	if(!head){
 	    pthread_mutex_unlock(&qlock);
 		return 0;
 	}else{
 		Node* temp = head;
         int tval = temp->value;
 		head = head->next;
+		temp = 0;
+		free(temp);
 	    pthread_mutex_unlock(&qlock);
 		return tval;
 	}
@@ -106,7 +103,6 @@ int load_generator(operation_t *op, generator_state_t **s) {
 	// set value for op­>operation and op­>value
 	op->operation = rand() % 2;
 	op->value = rand();
-    printf("about to return success in lg\n");
 	return 1; // 1 success ­­ return 0 for failure 
 }
 
@@ -115,22 +111,13 @@ void* work(void* p){
 	generator_state_t *state = 0;
 
 	while ( load_generator(&myops,&state) ){
-        printf("inside lg\n");
 		if(myops.operation==0){
-            printf("about to dq\n");
 			dequeue();
-            printf("dq'd\n");
 		}else{
-            printf("about to q\n");
 			enqueue(myops.value);
-            printf("q'd\n");
 		}
-        printf("before count lock\n");
 		pthread_mutex_lock(&countlock);
-        printf("thread inside count lock\n");
 		OP_COUNT++;
 		pthread_mutex_unlock(&countlock);
-        printf("thread outside count lock\n");
 	}
-    printf("got outside load generator\n");
 }
