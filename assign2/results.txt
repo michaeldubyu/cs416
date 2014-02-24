@@ -9,3 +9,14 @@ FROM 2009 MACBOOK PRO
 # of threads=10 time (seconds)=60 total number of operations=22052470
 # of threads=15 time (seconds)=60 total number of operations=21096024
 # of threads=20 time (seconds)=60 total number of operations=20129896
+FROM REMOTE.UGRAD.CS.UBC.CA
+# of threads=2 time (seconds)=30 total number of operations=147862002
+# of threads=5 time (seconds)=30 total number of operations=135183249
+# of threads=10 time (seconds)=30 total number of operations=130642281
+# of threads=15 time (seconds)=30 total number of operations=110827495
+# of threads=20 time (seconds)=30 total number of operations=110700806
+# of threads=2 time (seconds)=60 total number of operations=296338768
+# of threads=5 time (seconds)=60 total number of operations=266396852
+# of threads=10 time (seconds)=60 total number of operations=266392052
+# of threads=15 time (seconds)=60 total number of operations=230467392
+# of threads=20 time (seconds)=60 total number of operations=220860702
