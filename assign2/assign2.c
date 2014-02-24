@@ -61,7 +61,7 @@ int dequeue(){
 
 int main(int argc, char** args){
 	if(argc < 5){
-		printf("Need arguments to proceed! Exiting!\n");
+		printf("Usage : process -p <1-100> -t <1-300>.\n");
 		return 0;
 	}else{
 		PROCESSES = atoi(args[2]);
@@ -71,7 +71,7 @@ int main(int argc, char** args){
 			printf("Invalid process count! Exiting!\n");
 			return 0;
 		}
-		if(TTR<1 || TTR>100){	
+		if(TTR<1 || TTR>300){	
 			printf("Invalid time to run! Exiting!\n");
 			return 0;
 		}	
