@@ -1,0 +1,18 @@
+const False = 0   const True  = 1
+range Bool  = False..True
+
+RESOURCE = R[False][False][False],
+R[flag0:Bool][flag1:Bool][turn:Bool] = 
+	(when (!flag0 && !flag1) p0_raiseFlag_and_setTurnToOne -> R[True][flag1][True]
+	|when (!flag0 && !flag1) p1_raiseFlag_and_setTurnToZero ->R[flag0][True][False]
+	|when ((!flag0 && flag1) && !turn) p0_raiseFlag_and_setTurnToOne -> R[True][flag1][True]
+	|when ((!flag0 && flag1) && !turn) p1_useCriticalSection_and_lowerFlag ->R[flag0][False][turn]
+	|when (!flag0 && flag1 && turn) p0_raiseFlag_and_setTurnToOne -> R[True][flag1][True]
+	|when (!flag0 && flag1 && turn) p1_useCriticalSection_and_lowerFlag ->R[flag0][False][turn]
+	|when (flag0 && !flag1 && !turn) p0_useCriticalSection_and_lowerFlag -> R[False][flag1][turn]
+	|when (flag0 && !flag1 && !turn) p1_raiseFlag_and_setTurnToZero ->R[flag0][True][False]
+	|when (flag0 && !flag1 && turn) p0_useCriticalSection_and_lowerFlag -> R[False][flag1][turn]
+	|when (flag0 && !flag1 && turn) p1_raiseFlag_and_setTurnToZero ->R[flag0][True][False]
+	|when (flag0 && flag1 && !turn) p0_useCriticalSection_and_lowerFlag  -> R[False][flag1][turn]
+	|when (flag0 && flag1 && turn) p1_useCriticalSection_and_lowerFlag -> R[flag0][False][turn]
+	).
