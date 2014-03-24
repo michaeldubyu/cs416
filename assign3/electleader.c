@@ -47,7 +47,7 @@ int main(int argc, char** argv){
     MPI_Init( &argc, &argv ); 
 
     if (argc < 2){
-        printf("Usage : electleader <num processes initialized with mpiexec.\n");
+        printf("Usage : electleader <co-prime number with the number of nodes initialized by mpiexec\n");
         return EXIT_SUCCESS;
     }
 
