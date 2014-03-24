@@ -147,8 +147,11 @@ void beginElection(){
         left_msg.pid = pid;
         left_msg.rank_from = rank;
 
-        em right_msg = left_msg;
-        right_msg.direction = 1;
+        em right_msg;
+        right_msg.distanceToGo = distance;
+        right_msg.direction = 1; 
+        right_msg.pid = pid;
+        right_msg.rank_from = rank;
         
         if (leader){ 
             sendMessage(&left_msg, -1);
@@ -157,11 +160,12 @@ void beginElection(){
         // if still in the running, send a election msg out
 
         em recvd = receiveMsg();
-        
+        em recvd2 = receiveMsg();
         int got_left = -1; // did we get the msg from the left back from this round?
         int got_right = -1; // did we get the msg back from the right this round?
  
         recvd.distanceToGo--;
+        recvd2.distanceToGo--;
 
         if(recvd.pid > pid) {
             // if the received msg is greater than your pid, then pass it forward and drop out
@@ -174,6 +178,18 @@ void beginElection(){
                 sendMessage(&recvd,recvd.rank_from);
             }
         }
+        if(recvd2.pid > pid) {
+            // if the received msg is greater than your pid, then pass it forward and drop out
+            leader = 0;
+            if(recvd2.distanceToGo>0){
+                // still more distance to go? keep passing it
+                sendMessage(&recvd2,-1); 
+            }else{
+                // otherwise, return it to the original pid
+                sendMessage(&recvd2,recvd2.rank_from);
+            }
+        }
+
         if(recvd.pid == pid && leader){
             if(recvd.direction == -1) got_left = 1;
             if(recvd.direction == 1) got_right = 1;
