@@ -21,6 +21,7 @@ And so at every round we are guauranteed that 1/2 of the candidates are being el
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stddef.h>
 
 void beginElection();
 
@@ -76,7 +77,7 @@ void sendMessage(em* msg, int to_rank){
     MPI_Datatype mpi_em;
     MPI_Aint     offsets[4];
 
-    offsets[0] = offsetof(em, pid);
+    offsets[0] = offsetof(em, distanceToGo);
     offsets[1] = offsetof(em, direction );
     offsets[2] = offsetof(em, pid);
     offsets[3] = offsetof(em, rank_from);
@@ -117,7 +118,7 @@ em receiveMsg(){
     MPI_Datatype mpi_em;
     MPI_Aint     offsets[4];
 
-    offsets[0] = offsetof(em, pid);
+    offsets[0] = offsetof(em, distanceToGo);
     offsets[1] = offsetof(em, direction );
     offsets[2] = offsetof(em, pid);
     offsets[3] = offsetof(em, rank_from);
