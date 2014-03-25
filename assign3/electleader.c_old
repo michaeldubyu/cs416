@@ -15,7 +15,6 @@ Pseudocode :
   has made it all the way to the end in 2^round distance in that direction.
 
 And so at every round we are guauranteed that 1/2 of the candidates are being eliminated.
-
 */
 
 #include <mpi.h>
@@ -41,15 +40,17 @@ int total_received;
 int leader=1;           // am i currently in the running for a leader? - initially, i am
 int electing=1;         // are we currently still electing a leader? - initially, we are
 
-// election message format : int array
-// index 0 - distanceToGo
-// index 1 - direction 0 for left (+1) 1 for right (-1)
-// index 2 - pid
-// index 3 - rank from 
+typedef struct _electionMessage{
+    int distanceToGo;
+    const int direction; // 0 for left (+1) 1 for right (-1)
+    const int pid;
+    const int rank_from;
+} em;
 
-// count totals msg format : int array
-// index 0 - messages_sent
-// index 1 - messages_received
+typedef struct _countsMessage{
+    int messages_sent;
+    int messages_received;
+} totals;
 
 int main(int argc, char** argv){
 
@@ -78,20 +79,20 @@ int getNextNeighbor(int rank, int offset){
     }else return (int) (rank+offset)%size;
 }
 
-void sendMessage(int msg[4], int to_rank){
+void sendMessage(em* msg, int to_rank){
     // some ugly switching to accomodate usage of sending messages in one function altogether
     if(to_rank==-1 && msg){
         // send msg to left and right        
-        if(msg[1]==-1){
+        if(msg->direction==-1){
             int right = getNextNeighbor(rank, 1);
-            MPI_Send(msg, 4, MPI_INT, right, LEADERTAG, MPI_COMM_WORLD);
+            MPI_Send(msg, sizeof(em), MPI_BYTE, right, LEADERTAG, MPI_COMM_WORLD);
         }else{
             int left = getNextNeighbor(rank, -1);
-            MPI_Send(msg, 4, MPI_INT, left, LEADERTAG, MPI_COMM_WORLD);
+            MPI_Send(msg, sizeof(em), MPI_BYTE, left, LEADERTAG, MPI_COMM_WORLD);
         }
         messages_sent++;
     }else if (msg){
-        MPI_Send(msg, 4, MPI_INT, to_rank, LEADERTAG, MPI_COMM_WORLD);
+        MPI_Send(msg, sizeof(em), MPI_BYTE, to_rank, LEADERTAG, MPI_COMM_WORLD);
         messages_sent++;
     }else if (!msg && to_rank==-1){
         int win = 1;
@@ -105,69 +106,88 @@ void sendMessage(int msg[4], int to_rank){
     }
 }
 
+em receiveMsg(){
+    em recvd;
+    MPI_Status status;
+    MPI_Recv(&recvd, sizeof(em), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    messages_received++;
+
+    if(status.MPI_TAG == WINNERTAG){
+        electing = 0;
+        leader = 0;
+        leader_rank = status.MPI_SOURCE;
+    }
+
+    return recvd;
+}
+
 void beginElection(){
     while(electing && pow(2,round_counter) <= size){
         int distance = pow(2, round_counter);
         
-        int left_msg[4] = {distance, -1, pid, rank};
-        int right_msg[4] = {distance, 1, pid, rank};
+        em left_msg = { distance, -1, pid, rank};
+        em right_msg = { distance, 1, pid, rank };
         
         if (leader){ 
-            sendMessage(left_msg, -1);
-            sendMessage(right_msg, -1);
+            sendMessage(&left_msg, -1);
+            sendMessage(&right_msg, -1);
         }
         // if still in the running, send a election msg out
 
+        em recvd = receiveMsg();
+        em recvd2 = receiveMsg();
+        
         int got_left = -1; // did we get the msg from the left back from this round?
         int got_right = -1; // did we get the msg back from the right this round?
+ 
+        recvd.distanceToGo--;
+        recvd2.distanceToGo--;
 
-        int recvd[4];
-        MPI_Status status;
-        MPI_Recv(recvd, 4, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        messages_received++;
-
-        if(status.MPI_TAG == WINNERTAG){
-            electing = 0;
-            leader = 0;
-            leader_rank = status.MPI_SOURCE;
-        }
-
-        recvd[0]--;
-
-        if(recvd[2] > pid) {
+        if(recvd.pid > pid) {
             // if the received msg is greater than your pid, then pass it forward and drop out
             leader = 0;
-            if(recvd[0]>0){
+            if(recvd.distanceToGo>0){
                 // still more distance to go? keep passing it
-                sendMessage(recvd,-1); 
+                sendMessage(&recvd,-1); 
             }else{
                 // otherwise, return it to the original pid
-                sendMessage(recvd,recvd[3]);
+                sendMessage(&recvd,recvd.rank_from);
             }
         }
-        if(recvd[2] == pid && leader){
-            if(recvd[1] == -1) got_left = 1;
-            if(recvd[1] == 1) got_right = 1;
+        if(recvd2.pid > pid) {
+            // if the received msg is greater than your pid, then pass it forward and drop out
+            leader = 0;
+            if(recvd2.distanceToGo>0){
+                // still more distance to go? keep passing it
+                sendMessage(&recvd2,-1); 
+            }else{
+                // otherwise, return it to the original pid
+                sendMessage(&recvd2,recvd2.rank_from);
+            }
+        }
+
+        if(recvd.pid == pid && leader){
+            if(recvd.direction == -1) got_left = 1;
+            if(recvd.direction == 1) got_right = 1;
             if(got_left && got_right) sendMessage(0,-1);
         }
         round_counter++; 
     }
     if(leader){
-        printf("pid %d : is leader\n", pid);
         sendMessage(0,-1);
         int i = 0;
         for (i=0; i<size-1;i++){
             MPI_Status s;
-            int t[2];
-            MPI_Recv(t, 2, MPI_INT, MPI_ANY_SOURCE, FINISHEDTAG, MPI_COMM_WORLD, &s); 
-            total_sent += t[0];
-            total_received += t[1];
+            totals t;
+            MPI_Recv(&t, sizeof(t), MPI_BYTE, MPI_ANY_SOURCE, FINISHEDTAG, MPI_COMM_WORLD, &s); 
+            total_sent += t.messages_sent;
+            total_received += t.messages_received;
         }
         printf("rank=%d, id=%d, trcvd=%d, tsent=%d\n", rank, pid, total_sent, total_received); 
     }else{
         printf("rank=%d, id=%d, leader=0, mrcvd=%d, msent=%d\n", rank, pid, messages_received, messages_sent);
         // send totals to leader
-        int counts[2] = { messages_sent, messages_received };
-        MPI_Send(counts, 2,MPI_INT, leader_rank, FINISHEDTAG, MPI_COMM_WORLD);
+        totals counts = { messages_sent, messages_received };
+        MPI_Send(&counts, sizeof(em), MPI_BYTE, leader_rank, FINISHEDTAG, MPI_COMM_WORLD);
     }  
 }
